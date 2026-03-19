@@ -5,6 +5,7 @@
   "main": "./bin/pbiviz.js",
   "type": "module",
   "scripts": {
+    "postinstall": "node scripts/setup-ai-skills.cjs",
     "build": "tsc",
     "pbiviz": "node ./bin/pbiviz.js",
     "start": "npm run pbiviz start",
@@ -15,7 +16,8 @@
     "debug-tests": "npm run lint && npm run jasmine-inspect"
   },
   "bin": {
-    "pbiviz": "./bin/pbiviz.js"
+    "pbiviz": "./bin/pbiviz.js",
+    "powerbi-visuals-tools-ai-setup": "./scripts/setup-ai-skills.cjs"
   },
   "repository": {
     "type": "git",
