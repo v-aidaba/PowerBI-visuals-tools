@@ -3,7 +3,7 @@ import { createCertificate } from './CertificateTools.js';
 import ConsoleWriter from './ConsoleWriter.js';
 import VisualManager, { GenerateOptions } from './VisualManager.js';
 import { WebpackOptions } from './WebPackWrap.js';
-
+import { startMcpServer, initMcpConfig } from './mcp/McpServer.js';
 export interface LintOptions {
     verbose: boolean;
     fix: boolean;
@@ -114,5 +114,13 @@ export default class CommandManager {
 
     public static async installCert() {
         await createCertificate();
+    }
+
+  public static async mcp(rootPath: string) {
+        await startMcpServer(rootPath);
+    }
+
+    public static async mcpInit(rootPath: string) {
+        await initMcpConfig(rootPath);
     }
 }

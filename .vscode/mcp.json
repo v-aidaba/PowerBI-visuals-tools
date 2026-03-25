@@ -1,0 +1,11 @@
+{
+    "servers": {
+        "pbiviz": {
+            "command": "npx",
+            "args": [
+                "pbiviz",
+                "mcp"
+            ]
+        }
+    }
+}
