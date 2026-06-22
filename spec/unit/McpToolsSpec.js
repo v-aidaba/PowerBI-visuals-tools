@@ -303,7 +303,7 @@ describe("MCP Tools", () => {
             const projectDir = path.join(tempDir, 'initVisual');
             fs.ensureDirSync(projectDir);
 
-            await initMcpConfig(projectDir);
+            await initMcpConfig(projectDir, { scope: 'local' });
 
             const mcpPath = path.join(projectDir, '.vscode', 'mcp.json');
             expect(fs.existsSync(mcpPath)).toBeTrue();
@@ -323,7 +323,7 @@ describe("MCP Tools", () => {
             fs.ensureDirSync(vscodeDir);
             fs.writeJsonSync(path.join(vscodeDir, 'mcp.json'), { custom: true });
 
-            await initMcpConfig(projectDir);
+            await initMcpConfig(projectDir, { scope: 'local' });
 
             const config = fs.readJsonSync(path.join(vscodeDir, 'mcp.json'));
             expect(config.custom).toBeTrue();

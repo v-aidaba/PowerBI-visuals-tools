@@ -114,10 +114,13 @@ pbiviz
 pbiviz
     .command('mcp')
     .description('Start MCP (Model Context Protocol) server for AI assistant integration')
-    .option('--init', 'Initialize MCP configuration in current project (.vscode/mcp.json)')
+    .option('--init', 'Initialize MCP configuration for detected AI agents')
+    .option('--global', 'Register the MCP server in the user-global AI-agent config (across all projects)')
+    .option('--local', 'Register the MCP server only for the current project')
+    .option('--agent <agents>', 'Comma-separated agent ids to target (vscode,cursor,claude,gemini,windsurf)')
     .action((options) => {
         if (options.init) {
-            CommandManager.mcpInit(rootPath);
+            CommandManager.mcpInit(rootPath, options);
         } else {
             CommandManager.mcp(rootPath);
         }

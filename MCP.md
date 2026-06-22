@@ -8,6 +8,47 @@ Model Context Protocol (MCP) is an open protocol that allows AI assistants (like
 
 ## Quick Start
 
+### Automatic configuration (recommended)
+
+Run the init command and the tool will figure out the rest:
+
+```bash
+pbiviz mcp --init
+```
+
+It automatically:
+
+- **Detects the install scope.** If `powerbi-visuals-tools` is a project
+  dependency (in the project's `node_modules`), the MCP server is configured
+  **project-scoped only**. If it is installed globally (`npm install -g`), it can
+  be registered in your **user-global** AI-agent configuration so it is available
+  across every project.
+- **Detects which AI agents you use** from marker files in the project (or, for a
+  global install, from your home directory) and writes the correct config for
+  each — without you adding agents one by one.
+
+Supported agents and where their config lives:
+
+| Agent | Project config | Global config | Server key |
+|-------|----------------|---------------|------------|
+| VS Code (GitHub Copilot) | `.vscode/mcp.json` | user `Code/User/mcp.json` | `servers` |
+| Cursor | `.cursor/mcp.json` | `~/.cursor/mcp.json` | `mcpServers` |
+| Claude Code | `.mcp.json` | `~/.claude.json` | `mcpServers` |
+| Gemini CLI | `.gemini/settings.json` | `~/.gemini/settings.json` | `mcpServers` |
+| Windsurf | `.windsurf/mcp.json` | `~/.codeium/windsurf/mcp_config.json` | `mcpServers` |
+
+Useful flags:
+
+```bash
+pbiviz mcp --init --local                 # force project scope
+pbiviz mcp --init --global                # force user-global scope
+pbiviz mcp --init --agent cursor,claude   # target specific agents only
+```
+
+When installed globally with `npm install -g powerbi-visuals-tools`, a post-install
+step registers the server in your detected global agent configs automatically.
+Set `PBIVIZ_SKIP_MCP_SETUP=1` to opt out.
+
 ### Option 1: Using VS Code with Copilot
 
 1. Add this to your VS Code settings or create `.vscode/mcp.json`:

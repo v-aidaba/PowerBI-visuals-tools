@@ -13,7 +13,12 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 
 import ConsoleWriter from "../ConsoleWriter.js";
-import { configureMcpConfig, MCP_NEXT_STEPS } from "../McpConfigManager.js";
+import {
+    configureMcp,
+    detectInstallScope,
+    InstallScope,
+    MCP_NEXT_STEPS
+} from "../McpConfigManager.js";
 import { getBestPractices } from "./tools/bestPractices.js";
 import { checkVulnerabilities } from "./tools/vulnerabilities.js";
 import { prepareCertification } from "./tools/certification.js";
@@ -187,19 +192,28 @@ export async function startMcpServer(rootPath: string) {
     await server.start();
 }
 
-export async function initMcpConfig(rootPath: string) {
+export async function initMcpConfig(rootPath: string, options: { scope?: InstallScope; agentIds?: string[] } = {}) {
     try {
-        const result = configureMcpConfig(rootPath);
+        const scope = options.scope ?? detectInstallScope(rootPath);
+        ConsoleWriter.info(`Detected installation scope: ${scope === "global" ? "global (available across projects)" : "local (project dependency)"}`);
 
-        switch (result.status) {
-            case "already-exists":
-                ConsoleWriter.warning(result.message);
-                ConsoleWriter.info("To reconfigure, remove the 'pbiviz' entry and run this command again.");
-                return;
-            case "created":
-            case "added":
-                ConsoleWriter.done("MCP configuration created successfully!");
-                break;
+        const { results } = configureMcp({ projectDir: rootPath, scope, agentIds: options.agentIds });
+
+        if (results.length === 0) {
+            ConsoleWriter.warning("No supported AI agents were detected to configure.");
+            ConsoleWriter.info("Use 'pbiviz mcp --init --agent <vscode|cursor|claude|gemini|windsurf>' to target one explicitly.");
+            return;
+        }
+
+        const configured = results.filter(r => r.status === "created" || r.status === "added");
+        const alreadyExisting = results.filter(r => r.status === "already-exists");
+
+        configured.forEach(r => ConsoleWriter.done(`${r.agentName}: ${r.message}`));
+        alreadyExisting.forEach(r => ConsoleWriter.warning(`${r.agentName}: ${r.message}`));
+
+        if (configured.length === 0) {
+            ConsoleWriter.info("All detected agents are already configured. Remove a 'pbiviz' entry to reconfigure it.");
+            return;
         }
 
         ConsoleWriter.blank();

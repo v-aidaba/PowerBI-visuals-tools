@@ -40,6 +40,12 @@ interface NewOptions {
     template: string;
 }
 
+interface McpInitOptions {
+    global?: boolean;
+    local?: boolean;
+    agent?: string;
+}
+
 export default class CommandManager {
 
     public static async start(options: StartOptions, rootPath: string) {
@@ -123,8 +129,12 @@ export default class CommandManager {
         await startMcpServer(rootPath);
     }
 
-    public static async mcpInit(rootPath: string) {
-        await initMcpConfig(rootPath);
+    public static async mcpInit(rootPath: string, options: McpInitOptions = {}) {
+        const scope = options.global ? "global" : options.local ? "local" : undefined;
+        const agentIds = options.agent
+            ? options.agent.split(",").map(a => a.trim()).filter(Boolean)
+            : undefined;
+        await initMcpConfig(rootPath, { scope, agentIds });
     }
 
     public static async checkFirstRun(rootPath: string) {

@@ -1,7 +1,14 @@
 import { existsSync, writeFileSync } from "fs";
 import { join } from "path";
 import { createInterface } from "readline";
-import { isServerConfigured, configureMcpConfig, MCP_NEXT_STEPS } from "./McpConfigManager.js";
+import {
+    isAnyAgentConfigured,
+    configureMcp,
+    detectProjectAgents,
+    detectGlobalAgents,
+    detectInstallScope,
+    MCP_NEXT_STEPS
+} from "./McpConfigManager.js";
 import ConsoleWriter from "./ConsoleWriter.js";
 
 const DISMISSED_MARKER = ".mcp-setup-dismissed";
@@ -25,7 +32,7 @@ function shouldSkip(projectDir: string): boolean {
         return true;
     }
 
-    if (isServerConfigured(projectDir)) {
+    if (isAnyAgentConfigured(projectDir)) {
         return true;
     }
 
@@ -74,17 +81,35 @@ export async function checkFirstRunMcpSetup(projectDir: string): Promise<void> {
     ConsoleWriter.info(" • Best practices");
     ConsoleWriter.info(" • Project-aware AI assistance");
     ConsoleWriter.blank();
+
+    // Detect how the tool is installed so we know whether to configure the
+    // current project (local dependency) or the user's global agent config
+    // (installed via `npm install -g`).
+    const scope = detectInstallScope(projectDir);
+    const detected = scope === "local" ? detectProjectAgents(projectDir) : detectGlobalAgents();
+    const agentNames = detected.length > 0
+        ? detected.map(a => a.name).join(", ")
+        : "VS Code (GitHub Copilot)";
+
+    const scopeLabel = scope === "global"
+        ? "globally (available across all your projects)"
+        : "for this project";
+
     ConsoleWriter.info("┌─────────────────────────────────────────────────────────────────────┐");
-    ConsoleWriter.info("│     Enable AI-assisted development with GitHub Copilot, Claude,     │");
-    ConsoleWriter.info("│       or Cursor? This adds a .vscode/mcp.json config file.          │");
+    ConsoleWriter.info("│   Enable AI-assisted development for your detected AI agents?       │");
     ConsoleWriter.info("└─────────────────────────────────────────────────────────────────────┘");
+    ConsoleWriter.info(`  Install scope: ${scopeLabel}`);
+    ConsoleWriter.info(`  Detected agent(s): ${agentNames}`);
     ConsoleWriter.blank();
 
     const answer = await prompt("  ? Configure MCP server for AI-assisted development? (yes/no): ");
 
     if (answer === "y" || answer === "yes") {
-        configureMcpConfig(projectDir);
+        // Configure based on the detected install scope: a project dependency
+        // stays project-scoped, a global install registers in user-global config.
+        const { results } = configureMcp({ projectDir, scope });
         ConsoleWriter.done("MCP configuration created successfully!");
+        results.forEach(r => ConsoleWriter.info(` • ${r.agentName}: ${r.message}`));
         ConsoleWriter.blank();
         MCP_NEXT_STEPS.forEach(line => ConsoleWriter.info(line));
         ConsoleWriter.blank();
